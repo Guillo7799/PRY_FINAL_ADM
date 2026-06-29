@@ -1,0 +1,42 @@
+services:
+  oracle-db:
+    image: gvenzl/oracle-xe:21-slim
+    container_name: oracle-db
+    ports:
+      - "15210:1521"
+    environment:
+      ORACLE_PASSWORD: "Oracle123"
+    volumes:
+      - oracle-data:/opt/oracle/oradata
+    restart: unless-stopped
+
+  mariadb-db:
+    image: mariadb:latest
+    container_name: mariadb-db
+    ports:
+      - "33071:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: "MariaDB123"
+      MARIADB_DATABASE: "rrhh_catalogos"
+      MARIADB_USER: "dba_mariadb"
+      MARIADB_PASSWORD: "MariaDB123"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    restart: unless-stopped
+
+  sqlserver-rrhh:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver-rrhh
+    ports:
+      - "14330:1433"
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "SqlServer123!"
+    volumes:
+      - sqlserver-rrhh-data:/var/opt/mssql
+    restart: unless-stopped
+
+volumes:
+  oracle-data:
+  mariadb-data:
+  sqlserver-rrhh-data:

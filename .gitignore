@@ -1,0 +1,70 @@
+# -----------------------------
+# Python
+# -----------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+
+# Variables de entorno
+.env
+
+# Logs
+logs/
+*.log
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+
+# VS Code
+.vscode/
+
+# PyCharm
+.idea/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# Docker
+# -----------------------------
+docker-data/
+*.pid
+
+# -----------------------------
+# Bases de datos
+# -----------------------------
+*.db
+*.sqlite
+*.sqlite3
+
+# Dumps o backups
+*.sql.gz
+*.bak
+
+# -----------------------------
+# Archivos de Python
+# -----------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+
+# -----------------------------
+# Jupyter
+# -----------------------------
+.ipynb_checkpoints/
+
+# -----------------------------
+# Archivos compilados
+# -----------------------------
+dist/
+build/
+*.egg-info/
