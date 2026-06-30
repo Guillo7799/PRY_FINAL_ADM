@@ -4,6 +4,13 @@ import oracledb
 import pyodbc
 import pymysql
 
+# ----------------------------------------------------
+# Conexión a los tres motores de base de datos
+
+# Se establece una conexión independiente con Oracle,
+# SQL Server y MariaDB para poder extraer y consolidar
+# la información de cada uno de ellos.
+
 oracle = oracledb.connect(
     user="system",
     password="Oracle123",
@@ -27,12 +34,20 @@ mariadb = pymysql.connect(
     database="rrhh_catalogos"
 )
 
+# Se crean los cursores para ejecutar consultas en cada SGBD.
 cur_oracle = oracle.cursor()
 cur_sql = sqlserver.cursor()
 cur_maria = mariadb.cursor()
 
+# Antes de generar una nueva consolidación se elimina
+# la información anterior para evitar registros duplicados.
 cur_oracle.execute("DELETE FROM rrhh_oracle.nomina_consolidada")
 
+# ----------------------------------------------------
+# Extracción de información desde MariaDB
+
+# Se obtiene el catálogo de cargos y departamentos
+# que posteriormente será asociado a cada empleado.
 cur_maria.execute("""
     SELECT c.cargo_id, c.nombre, d.nombre
     FROM cargos c
@@ -42,6 +57,11 @@ cur_maria.execute("""
 
 cargos = cur_maria.fetchall()
 
+# ----------------------------------------------------
+# Extracción de información desde Oracle
+
+# Se recuperan los datos principales de cada empleado,
+# junto con su contrato laboral y salario base.
 cur_oracle.execute("""
     SELECT e.empleado_id, e.nombres, e.apellidos, e.correo,
            c.salario_base, c.estado
@@ -51,15 +71,28 @@ cur_oracle.execute("""
 """)
 
 empleados = cur_oracle.fetchall()
+
+# Lista donde se almacenará la información consolidada
+# antes de insertarla nuevamente en Oracle.
 datos_consolidados = []
 
+# ----------------------------------------------------
+# Transformación de la información
+
+# Para cada empleado se consulta la asistencia registrada
+# en SQL Server y se combina con la información obtenida
+# desde Oracle y MariaDB.
 for empleado in empleados:
+
     empleado_id, nombres, apellidos, correo, salario_base, estado_contrato = empleado
 
+    # Se asigna un cargo y departamento del catálogo generado.
     cargo = random.choice(cargos)
+
     nombre_cargo = cargo[1]
     nombre_departamento = cargo[2]
 
+    # Se calculan indicadores de asistencia del empleado.
     cur_sql.execute("""
         SELECT
             COUNT(*) AS total_asistencias,
@@ -71,6 +104,8 @@ for empleado in empleados:
 
     asistencia = cur_sql.fetchone()
 
+    # Se construye el registro consolidado que posteriormente
+    # será almacenado en Oracle.
     datos_consolidados.append((
         empleado_id,
         nombres,
@@ -86,6 +121,12 @@ for empleado in empleados:
         nombre_cargo
     ))
 
+# ----------------------------------------------------
+# Carga de la información consolidada
+
+# Se realiza una inserción masiva en la tabla
+# nomina_consolidada utilizando todos los registros
+# generados durante el proceso ETL.
 cur_oracle.executemany("""
     INSERT INTO rrhh_oracle.nomina_consolidada (
         empleado_id, nombres, apellidos, correo, salario_base,
@@ -95,12 +136,16 @@ cur_oracle.executemany("""
     VALUES (:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12)
 """, datos_consolidados)
 
+# Guarda todos los cambios realizados en Oracle.
 oracle.commit()
 
+# Cierra los cursores utilizados durante el proceso.
 cur_oracle.close()
 cur_sql.close()
 cur_maria.close()
 
+# Finaliza las conexiones con cada uno de los motores
+# de base de datos.
 oracle.close()
 sqlserver.close()
 mariadb.close()
